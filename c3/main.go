@@ -3,21 +3,27 @@ package main
 import (
 	"log"
 	"net/http"
-	"strings"
+	"net/http/cookiejar"
+	"net/http/httputil"
 )
 
 func main() {
-	// file, err := os.Open("main.go")
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	reader := strings.NewReader("text1234")
-
-	resp, err := http.Post("http://localhost:18888", "text/plain", reader)
+	jar, err := cookiejar.New(nil)
 	if err != nil {
-		// 送信失敗
 		panic(err)
 	}
-	log.Println("Status:", resp.Status)
+	client := http.Client{
+		Jar: jar,
+	}
+	for i := 0; i < 2; i++ {
+		resp, err := client.Get("http://localhost:18888/cookie")
+		if err != nil {
+			panic(err)
+		}
+		dump, err := httputil.DumpResponse(resp, true)
+		if err != nil {
+			panic(err)
+		}
+		log.Println(string(dump))
+	}
 }
