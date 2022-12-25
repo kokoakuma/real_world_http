@@ -3,15 +3,18 @@ package main
 import (
 	"log"
 	"net/http"
-	"net/url"
+	"strings"
 )
 
 func main() {
-	values := url.Values{
-		"test": {"value"},
-	}
+	// file, err := os.Open("main.go")
+	// if err != nil {
+	// 	panic(err)
+	// }
 
-	resp, err := http.PostForm("http://localhost:18888", values)
+	reader := strings.NewReader("text1234")
+
+	resp, err := http.Post("http://localhost:18888", "text/plain", reader)
 	if err != nil {
 		// 送信失敗
 		panic(err)
