@@ -4,8 +4,11 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"net/http/httputil"
+	"net/rpc"
+	"net/rpc/jsonrpc"
 	"time"
 )
 
@@ -68,12 +71,42 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "<html><body>hello</body></html>/n")
 }
 
-func main() {
-	var httpServer http.Server
-	http.HandleFunc("/", handler)
-	http.HandleFunc("/upgrade", handleUpgrade)
-	http.HandleFunc("/chunked", handleChunkedResponse)
-	log.Println("start http listening :18888")
-	httpServer.Addr = ":18888"
-	log.Println(httpServer.ListenAndServe())
+type Calculator int
+type Args struct {
+	A, B int
 }
+
+func (c *Calculator) Multiply(args Args, result *int) error {
+	log.Printf("Multiply called: %d, %d\n", args.A, args.B)
+	*result = args.A * args.B
+	return nil
+}
+
+func main() {
+	Calculator := new(Calculator)
+	server := rpc.NewServer()
+	server.Register(Calculator)
+	http.Handle(rpc.DefaultRPCPath, server)
+	log.Println("start http listening :18888")
+	listener, err := net.Listen("tcp", ":18888")
+	if err != nil {
+		panic(err)
+	}
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			panic(err)
+		}
+		go server.ServeCodec(jsonrpc.NewServerCodec(conn))
+	}
+}
+
+// func mainWithUpgrade() {
+// 	var httpServer http.Server
+// 	http.HandleFunc("/", handler)
+// 	http.HandleFunc("/upgrade", handleUpgrade)
+// 	http.HandleFunc("/chunked", handleChunkedResponse)
+// 	log.Println("start http listening :18888")
+// 	httpServer.Addr = ":18888"
+// 	log.Println(httpServer.ListenAndServe())
+// }
