@@ -97,3 +97,10 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+
+# Certification
+*.cnf
+*.key
+*.csr
+*.crt
+*.srl
