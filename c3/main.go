@@ -1,19 +1,29 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"net/http/httputil"
+
+	"golang.org/x/net/idna"
 )
 
 func main() {
-	transport := &http.Transport{}
-	transport.RegisterProtocol("file", http.NewFileTransport(http.Dir(".")))
-	client := http.Client{
-		Transport: transport,
+	src := "握力王"
+	ascii, err := idna.ToASCII(src)
+	if err != nil {
+		panic(err)
 	}
+	fmt.Printf("%s -> %s\n", src, ascii)
 
-	resp, err := client.Get("file://./main.go")
+	client := &http.Client{}
+	request, err := http.NewRequest("DELETE", "http://localhost:18888", nil)
+	if err != nil {
+		panic(err)
+	}
+	request.Header.Add("Content-Type", "image/jpeg")
+	resp, err := client.Do(request)
 	if err != nil {
 		panic(err)
 	}
