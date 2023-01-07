@@ -2,15 +2,41 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/http"
 )
 
-func main() {
-	resp, err := http.Get("https://google.com/")
+var image []byte
+
+func init() {
+	var err error
+	image, err := ioutil.ReadFile("./image.jpg")
+	if image == nil {
+		panic("")
+	}
 	if err != nil {
 		panic(err)
 	}
+}
 
-	defer resp.Body.Close()
-	fmt.Printf("Protocol Version: %s\n", resp.Proto)
+func handlerHtml(w http.ResponseWriter, r *http.Request) {
+	pusher, ok := w.(http.Pusher)
+	if ok {
+		pusher.Push("/image", nil)
+	}
+	w.Header().Add("Content-Type", "text/html")
+	fmt.Fprintf(w, `<html><body><img src="/image"></body></html>`)
+}
+
+func handlerImage(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "image/jpeg")
+	w.Write(image)
+}
+
+func main() {
+	http.HandleFunc("/", handlerHtml)
+	http.HandleFunc("/image", handlerImage)
+	fmt.Println("start http listening :18443")
+	err := http.ListenAndServeTLS(":18443", "../server.crt", "../server.key", nil)
+	fmt.Println(err)
 }
